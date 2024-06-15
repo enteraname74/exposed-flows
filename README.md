@@ -12,11 +12,11 @@ You can map the `ResultRow` elements with the `mapResultRow()` function.
 
 ```kotlin
 fun getAll(): Flow<List<User>> = transaction {
-        UserTable
-            .selectAll()
-            .asFlow()
-            .mapResultRow { it.toUser() }
-    }
+    UserTable
+        .selectAll()
+        .asFlow()
+        .mapResultRow { it.toUser() }
+}
 ```
 ```kotlin
 fun getFromId(id: UUID): Flow<User?> = transaction {
