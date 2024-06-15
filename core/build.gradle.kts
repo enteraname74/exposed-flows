@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "com.github.enteraname74.exposedflows"
-version = "1.0-SNAPSHOT"
+version = "0.1.0"
 
 repositories {
     mavenCentral()
@@ -22,6 +22,11 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
 tasks.test {
     useJUnitPlatform()
 }
+
+tasks.jar {
+    archiveFileName.set("exposed-flows-core-$version")
+}
+
 kotlin {
     jvmToolchain(17)
 }
