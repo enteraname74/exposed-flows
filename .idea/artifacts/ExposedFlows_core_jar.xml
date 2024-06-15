@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="ExposedFlows.core:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/ExposedFlows_core_jar</output-path>
+    <root id="archive" name="ExposedFlows.jar" />
+  </artifact>
+</component>
