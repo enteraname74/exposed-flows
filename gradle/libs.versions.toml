@@ -1,6 +1,6 @@
 [versions]
 coroutines-core = "1.9.0-RC"
-exposed = "0.46.0"
+exposed = "0.51.1"
 sqlite-jdbc = "3.41.2.2"
 
 [libraries]

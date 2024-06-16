@@ -23,7 +23,7 @@ suspend fun test() {
     }
 
     CoroutineScope(Dispatchers.IO).launch {
-        userDao.getAllFlow().collect {
+        userDao.getAll().collect {
             println("ALL USERS: $it")
         }
     }
@@ -47,7 +47,7 @@ suspend fun test() {
             userId = userId,
             name = "Doggo"
         )
-        userDao.insertFlow(user)
+        userDao.insert(user)
         dogDao.insert(dog)
         delay(1000)
         userDao.deleteById(userId)

@@ -79,12 +79,7 @@ fun Query.asFlow(): Flow<List<ResultRow>> = transaction {
     )
     FlowSystem.addFlow(newFlow)
 
-    newFlow.flow.map { originalList ->
-        val resultList = transaction { this@asFlow.toList() }
-        originalList.filter { originalElement ->
-            resultList.map { it.toString() }.contains(originalElement.toString())
-        }
-    }
+    newFlow.flow
 }
 
 fun <R> Flow<List<ResultRow>>.mapResultRow(transform: (ResultRow) -> R): Flow<List<R>> =

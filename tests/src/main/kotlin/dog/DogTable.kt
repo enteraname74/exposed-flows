@@ -1,19 +1,19 @@
 package dog
 
+import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
 import user.UserTable
 import java.util.*
 
-object DogTable: Table() {
-    val id = varchar("id", 128)
-    val userId = reference("userId", UserTable.id, onDelete = ReferenceOption.CASCADE)
+object DogTable : UUIDTable() {
+    val user = reference("userId", UserTable, onDelete = ReferenceOption.CASCADE)
     val name = varchar("name", 128)
 }
 
 fun ResultRow.toDog() = Dog(
-    id = UUID.fromString(this[DogTable.id]),
-    userId = UUID.fromString(this[DogTable.userId]),
+    id = this[DogTable.id].value,
+    userId = this[DogTable.user].value,
     name = this[DogTable.name]
 )

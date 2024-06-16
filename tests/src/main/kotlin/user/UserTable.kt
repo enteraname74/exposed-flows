@@ -1,19 +1,17 @@
 package user
 
+import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
 import java.util.*
 
-object UserTable: Table() {
-    val id = varchar("id", 128)
+object UserTable: UUIDTable() {
     val name = varchar("name", 128)
     val age = integer("age")
-
-    override val primaryKey = PrimaryKey(id)
 }
 
 fun ResultRow.toUser(): User = User(
-    id = UUID.fromString(this[UserTable.id]),
+    id = this[UserTable.id].value,
     name = this[UserTable.name],
     age = this[UserTable.age]
 )

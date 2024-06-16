@@ -16,15 +16,14 @@ class DogDao {
     suspend fun deleteById(id: UUID) {
         dbQuery {
             DogTable.deleteWhere {
-                DogTable.id eq id.toString()
+                DogTable.id eq id
             }
         }
     }
     suspend fun insert(dog: Dog) {
         flowTransactionOn(DogTable) {
             DogTable.insert {
-                it[id] = dog.id.toString()
-                it[userId] = dog.userId.toString()
+                it[user] = dog.userId
                 it[name] = dog.name
             }
         }

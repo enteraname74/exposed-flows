@@ -18,34 +18,25 @@ class UserDao {
     suspend fun deleteById(id: UUID) {
         flowTransactionOn(UserTable, DogTable) {
             UserTable.deleteWhere {
-                UserTable.id eq id.toString()
-            }
-            DogTable.deleteWhere {
-                DogTable.userId eq id.toString()
+                UserTable.id eq id
             }
         }
     }
 
-    suspend fun insertFlow(user: User) {
+    suspend fun insert(user: User) {
         flowTransactionOn(UserTable) {
             UserTable.insert {
-                it[id] = user.id.toString()
+                it[id] = user.id
                 it[name] = user.name
                 it[age] = user.age
             }
         }
     }
 
-    suspend fun deleteFromAge(age: Int) {
-        flowTransactionOn(UserTable) {
-            UserTable.deleteWhere { UserTable.age eq age }
-        }
-    }
-
     fun getFromId(id: UUID): Flow<User?> = transaction {
         UserTable
             .selectAll()
-            .where { UserTable.id eq id.toString() }
+            .where { UserTable.id eq id }
             .asFlow()
             .mapResultRow { it.toUser() }
             .map { it.firstOrNull() }
@@ -60,13 +51,7 @@ class UserDao {
             .map { it.firstOrNull() }
     }
 
-    suspend fun getAll(): List<User> = dbQuery {
-        UserTable
-            .selectAll()
-            .map { it.toUser() }
-    }
-
-    fun getAllFlow(): Flow<List<User>> = transaction {
+    fun getAll(): Flow<List<User>> = transaction {
         UserTable
             .selectAll()
             .asFlow()
