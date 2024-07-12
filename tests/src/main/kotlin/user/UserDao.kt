@@ -1,12 +1,9 @@
 package user
 
-import asFlow
-import dbQuery
+import com.github.enteraname74.exposedflows.*
 import dog.DogTable
-import flowTransactionOn
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import mapResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -24,7 +21,7 @@ class UserDao {
     }
 
     suspend fun insert(user: User) {
-        flowTransactionOn(UserTable) {
+        flowTransactionOn {
             UserTable.insert {
                 it[id] = user.id
                 it[name] = user.name
@@ -38,8 +35,7 @@ class UserDao {
             .selectAll()
             .where { UserTable.id eq id }
             .asFlow()
-            .mapResultRow { it.toUser() }
-            .map { it.firstOrNull() }
+            .mapSingleResultRow { it.toUser() }
     }
 
     fun getFromAge(age: Int): Flow<User?> = transaction {
@@ -48,7 +44,7 @@ class UserDao {
             .where { UserTable.age eq age }
             .asFlow()
             .mapResultRow { it.toUser() }
-            .map { it.firstOrNull() }
+            .firstOrNull()
     }
 
     fun getAll(): Flow<List<User>> = transaction {

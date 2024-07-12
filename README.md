@@ -7,8 +7,17 @@ This project aims to provide flows support for [Exposed](https://github.com/JetB
 ### Retrieving a flow
 
 You can retrieve a flow on a `Query` with the `asFlow()` extension function.
-The `asFlow()` function returns a `List<ResultRow>`. 
-You can map the `ResultRow` elements with the `mapResultRow()` function.
+```kotlin
+UserTable
+    .selectAll()
+    .asFlow()
+```
+#### Operations on the flow
+
+The `asFlow()` function returns a `List<ResultRow>`.
+Some utility functions exist to manage easily the given flow.
+
+You can map the `ResultRow` elements with the `mapResultRow` function.
 
 ```kotlin
 fun getAll(): Flow<List<User>> = transaction {
@@ -18,16 +27,32 @@ fun getAll(): Flow<List<User>> = transaction {
         .mapResultRow { it.toUser() }
 }
 ```
+
+If you want to map and retrieve only one element of the flow, you can use `mapSingleResultRow`.
+
 ```kotlin
 fun getFromId(id: UUID): Flow<User?> = transaction {
     UserTable
         .selectAll()
         .where { UserTable.id eq id.toString() }
         .asFlow()
-        .mapResultRow { it.toUser() }
-        .map { it.firstOrNull() }
+        .mapSingleResultRow { it.toUser() }
 }
 ```
+
+You can also do this separately by using `mapResultRow` to map the flow and `firstOrNull` to retrieve one element:
+```kotlin
+fun getAgeFromId(id: UUID): Flow<Int?> = transaction {
+    UserTable
+        .selectAll()
+        .where { UserTable.id eq id.toString() }
+        .asFlow()
+        .mapResultRow { it.toUser() }
+        .map { list -> list.map { it.age } }
+        .firstOrNull()
+}
+```
+
 
 ### Updating tables
 
@@ -58,3 +83,20 @@ suspend fun deleteById(id: UUID) {
     }
 }
 ```
+You can also omit to give the concerned tables.
+In this case, the system will find by itself the tables used to update the concerned flows.
+
+```kotlin
+suspend fun deleteById(id: UUID) {
+    flowTransactionOn {
+        UserTable.deleteWhere {
+            UserTable.id eq id.toString()
+        }
+        DogTable.deleteWhere {
+            DogTable.userId eq id.toString()
+        }
+    }
+}
+```
+
+> :warning: This solution may not work properly with complex SQL statements and/or with complex table names.

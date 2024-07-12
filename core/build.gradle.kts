@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "com.github.enteraname74.exposedflows"
-version = "0.1.0"
+version = "0.2.0"
 
 repositories {
     mavenCentral()
@@ -24,7 +24,7 @@ tasks.test {
 }
 
 tasks.jar {
-    archiveFileName.set("exposed-flows-core-$version")
+    archiveFileName.set("exposed-flows-core-$version.jar")
 }
 
 kotlin {

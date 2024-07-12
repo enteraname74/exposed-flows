@@ -1,9 +1,11 @@
+package com.github.enteraname74.exposedflows
+
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 
 /**
@@ -52,39 +54,38 @@ internal object FlowSystem {
     }
 }
 
-/**
- * Used to do a transaction on a table.
- * It will update all flows that uses values related to the table.
- */
-suspend fun <T> flowTransactionOn(vararg table: Table, block: () -> T) {
+internal suspend fun <T> updateFromLogger(block: () -> T) {
+    dbQuery {
+        addLogger(TableWriteOperationLogger)
+        block()
+        val referencedTablesNames: List<String> = TableWriteOperationLogger.getAccessedTables()
+        FlowSystem.update(referencedTablesNames = referencedTablesNames)
+        TableWriteOperationLogger.clear()
+    }
+}
+
+internal suspend fun <T> updateFromGivenTablesNames(tables: List<String>, block: () -> T) {
     dbQuery {
         block()
-        FlowSystem.update(referencedTablesNames = table.asList().map { it.tableName })
+        FlowSystem.update(referencedTablesNames = tables)
     }
 }
-
-private val Query.tables: List<Table>
-    get() = this.set.source.columns.map { it.table }.distinct()
 
 /**
- * Returns the result of a query as a flow.
- * When one of the table of the query change,
- * the flow returned from this function will emit a new value.
+ * Used to do a transaction on multiple tables and update all flows that use values related to the given tables.
+ *
+ * If not tables are given, the system will try to find the concerned table in the [block].
+ * Beware that tables may be not recognized or that some SQL statements may be too complex.
+ * This approach should be used for relatively simple SQL statements.
  */
-fun Query.asFlow(): Flow<List<ResultRow>> = transaction {
-    val referencedTablesNames = this@asFlow.tables.map { it.tableName }
-    val newFlow = FlowInformation(
-        referencedTablesNames = referencedTablesNames,
-        query = this@asFlow
-    )
-    FlowSystem.addFlow(newFlow)
-
-    newFlow.flow
+suspend fun <T> flowTransactionOn(vararg table: Table, block: () -> T) {
+    val tableNames = table.asList().map { it.tableName }
+    if (tableNames.isEmpty()) {
+        updateFromLogger { block() }
+    } else {
+        updateFromGivenTablesNames(tableNames) { block() }
+    }
 }
 
-fun <R> Flow<List<ResultRow>>.mapResultRow(transform: (ResultRow) -> R): Flow<List<R>> =
-    this.map { list ->
-        list.map {
-            transform(it)
-        }
-    }
+internal suspend fun <T> dbQuery(block: suspend Transaction.() -> T): T =
+    newSuspendedTransaction(Dispatchers.IO) { block() }

@@ -1,14 +1,15 @@
 package dog
 
-import asFlow
-import dbQuery
-import flowTransactionOn
+import com.github.enteraname74.exposedflows.asFlow
+import com.github.enteraname74.exposedflows.flowTransactionOn
+import com.github.enteraname74.exposedflows.mapResultRow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import mapResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
@@ -36,3 +37,6 @@ class DogDao {
             .mapResultRow { it.toDog() }
     }
 }
+
+internal suspend fun <T> dbQuery(block: suspend () -> T): T =
+    newSuspendedTransaction(Dispatchers.IO) { block() }
