@@ -1,4 +1,4 @@
-# ExposedFlows
+# exposed-flows
 
 This project aims to provide flows support for [Exposed](https://github.com/JetBrains/Exposed).
 
