@@ -1,12 +1,13 @@
 package com.github.enteraname74.exposedflows
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Represent information about a flow.
@@ -34,19 +35,27 @@ internal data class FlowInformation(
  */
 internal object FlowSystem {
     private val allFlows: ArrayList<FlowInformation> = arrayListOf()
+    private val mutex: Mutex = Mutex()
 
     /**
      * Adds a flow to the list of flows of the system.
      */
-    fun addFlow(flowInformation: FlowInformation) {
-        allFlows.add(flowInformation)
+    suspend fun addFlow(flowInformation: FlowInformation) {
+        mutex.withLock {
+            allFlows.add(flowInformation)
+        }
     }
 
     /**
      * Update all flows that are linked to one of the referenced tables names.
      */
     fun update(referencedTablesNames: List<String>) {
-        allFlows.forEach { flowInformation ->
+        val snapshot: List<FlowInformation>
+        synchronized(allFlows) {
+            snapshot = allFlows.toList()
+        }
+
+        snapshot.forEach { flowInformation ->
             if (flowInformation.referencedTablesNames.any { referencedTablesNames.contains(it) }) {
                 flowInformation.update()
             }

@@ -1,21 +1,25 @@
 import com.github.enteraname74.exposedflows.flowTransactionOn
-import dog.Dog
-import dog.DogDao
-import dog.DogTable
+import dog.*
+import dog.dbQuery
+import hat.Hat
+import hat.HatTable
+import hat.toNullableHat
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.upsert
+import org.jetbrains.exposed.sql.transactions.transaction
 import user.User
 import user.UserDao
 import user.UserTable
+import user.toUser
 import java.util.*
 
 suspend fun main() {
     AppDatabase.connectToDatabase()
     test()
     automaticFlowTransactionTest()
+    transaction()
 }
 
 suspend fun test() {
@@ -90,3 +94,75 @@ suspend fun automaticFlowTransactionTest() {
         }
     }
 }
+
+suspend fun transaction() {
+    val userDao = UserDao()
+    val dogDao = DogDao()
+    val userId = UUID.randomUUID()
+    val userId2 = UUID.randomUUID()
+    val user = User(
+        id = userId,
+        name = "John",
+        age = 12
+    )
+    userDao.insert(user)
+    val user2 = User(
+        id = userId2,
+        name = "Jack",
+        age = 12
+    )
+    userDao.insert(user2)
+    dogDao.insert(Dog(id = UUID.randomUUID(), userId = userId, name = "Doggo"))
+    dogDao.insert(Dog(id = UUID.randomUUID(), userId = userId, name = "Dog"))
+
+    dbQuery {
+        HatTable.insert { table ->
+            table[HatTable.user] = userId
+            table[hat] = "Hat"
+        }
+        HatTable.insert { table ->
+            table[HatTable.user] = userId2
+            table[hat] = "HatDos"
+        }
+
+        println(userDao.getAll().first())
+
+        val query = (UserTable fullJoin DogTable fullJoin HatTable).selectAll().toList().groupBy (
+            { it }, { listOf(it.toNullableDog(), it.toNullableHat()) }
+        )
+        query.forEach { (k, v) ->
+            println("KEY: $k, VALUE: $v")
+        }
+        UserTable.deleteAll()
+        DogTable.deleteAll()
+        HatTable.deleteAll()
+    }
+}
+
+data class UserWithDogAndHat(
+    val user: User,
+    val dogs: List<Dog>,
+    val hats: List<Hat>,
+)
+
+fun joinTable(tables: List<Table>): Join {
+    return if (tables.size == 2) {
+        tables[0] fullJoin tables[1]
+    } else {
+        tables[0] fullJoin joinTable(tables.subList(1, tables.size))
+    }
+}
+
+fun <T>embeddedResult(vararg table: Table): Map<ResultRow, List<ResultRow>> {
+    val tables: List<Table> = table.toList()
+    val query: Query = if (tables.size > 1) {
+        joinTable(tables).selectAll()
+    } else if (tables.size == 1) {
+        tables.first().selectAll()
+    } else {
+        return mapOf()
+    }
+
+    return mapOf()
+}
+

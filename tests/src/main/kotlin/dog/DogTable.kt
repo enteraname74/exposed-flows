@@ -17,3 +17,11 @@ fun ResultRow.toDog() = Dog(
     userId = this[DogTable.user].value,
     name = this[DogTable.name]
 )
+
+fun ResultRow.toNullableDog(): Dog? = try {
+    Dog(
+        id = this[DogTable.id].value,
+        userId = this[DogTable.user].value,
+        name = this[DogTable.name]
+    )
+} catch (e: NullPointerException) { null}

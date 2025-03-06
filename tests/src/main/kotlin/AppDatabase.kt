@@ -1,4 +1,5 @@
 import dog.DogTable
+import hat.HatTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -10,7 +11,8 @@ object AppDatabase {
         transaction {
             SchemaUtils.create(
                 UserTable,
-                DogTable
+                DogTable,
+                HatTable,
             )
         }
     }
